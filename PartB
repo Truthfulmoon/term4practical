@@ -1,0 +1,36 @@
+public TicketDAO() {                                   // B1
+    try {
+        conn = DBConnection.derbyConnection();
+    } catch (SQLException ex) {
+        System.out.println("Could not connect to database: " + ex.getMessage());
+    }
+}
+
+public void insertTicket(ParkingTicket ticket) throws SQLException {   // B2
+    String sql = "INSERT INTO PARKING_TICKET (PLATE_NUMBER, DRIVER_NAME, HOURS_PARKED, AMOUNT_DUE) "
+               + "VALUES (?, ?, ?, ?)";
+    try (PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setString(1, ticket.getPlateNumber());
+        ps.setString(2, ticket.getDriverName());
+        ps.setInt(3, ticket.getHoursParked());
+        ps.setDouble(4, ticket.getAmountDue());
+        ps.executeUpdate();
+    }
+}
+
+public List<ParkingTicket> getAllTickets() throws SQLException {       // B3
+    List<ParkingTicket> tickets = new ArrayList<>();
+    String sql = "SELECT PLATE_NUMBER, DRIVER_NAME, HOURS_PARKED, AMOUNT_DUE "
+               + "FROM PARKING_TICKET ORDER BY PLATE_NUMBER";
+    try (PreparedStatement ps = conn.prepareStatement(sql);
+         ResultSet rs = ps.executeQuery()) {
+        while (rs.next()) {
+            tickets.add(new ParkingTicket(
+                    rs.getString("PLATE_NUMBER"),
+                    rs.getString("DRIVER_NAME"),
+                    rs.getInt("HOURS_PARKED"),
+                    rs.getDouble("AMOUNT_DUE")));
+        }
+    }
+    return tickets;
+}
