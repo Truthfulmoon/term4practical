@@ -1,0 +1,74 @@
+public ParkingServer() {                               // A1
+    try {
+        dao = new TicketDAO();
+        serverSocket = new ServerSocket(Protocol.PORT);
+        System.out.println("Server listening on port " + Protocol.PORT);
+        client = serverSocket.accept();
+        System.out.println("Client connected: " + client.getInetAddress());
+    } catch (IOException ex) {
+        System.out.println("Server error: " + ex.getMessage());
+    }
+}
+
+public void getStreams() {                             // A2
+    try {
+        out = new ObjectOutputStream(client.getOutputStream());
+        out.flush();
+        in = new ObjectInputStream(client.getInputStream());
+    } catch (IOException ex) {
+        System.out.println("Could not create streams: " + ex.getMessage());
+    }
+}
+
+public void processClient() {                          // A3
+    try {
+        while (true) {
+            String command = (String) in.readObject();
+
+            if (command.equals(Protocol.ADD)) {
+                ParkingTicket ticket = (ParkingTicket) in.readObject();
+                try {
+                    dao.insertTicket(ticket);
+                    out.writeObject(Protocol.OK);
+                } catch (SQLException ex) {
+                    out.writeObject(Protocol.ERROR + ex.getMessage());
+                }
+                out.flush();
+
+            } else if (command.equals(Protocol.RETRIEVE)) {
+                try {
+                    out.writeObject(new ArrayList<ParkingTicket>(dao.getAllTickets()));
+                } catch (SQLException ex) {
+                    out.writeObject(new ArrayList<ParkingTicket>());
+                }
+                out.flush();
+
+            } else if (command.equals(Protocol.EXIT)) {
+                break;
+            }
+        }
+    } catch (EOFException ex) {
+        System.out.println("Client disconnected.");
+    } catch (IOException | ClassNotFoundException ex) {
+        System.out.println("Communication error: " + ex.getMessage());
+    }
+}
+
+private void closeConnection() {                       // A4
+    try {
+        if (out != null) out.close();
+        if (in != null) in.close();
+        if (client != null) client.close();
+        if (serverSocket != null) serverSocket.close();
+    } catch (IOException ex) {
+        System.out.println("Error closing connection: " + ex.getMessage());
+    }
+    System.out.println("Server closed.");
+}
+
+public static void main(String[] args) {               // A5
+    ParkingServer server = new ParkingServer();
+    server.getStreams();
+    server.processClient();
+    server.closeConnection();
+}
