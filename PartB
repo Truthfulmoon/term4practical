@@ -1,36 +1,71 @@
-public TicketDAO() {                                   // B1
-    try {
-        conn = DBConnection.derbyConnection();
-    } catch (SQLException ex) {
-        System.out.println("Could not connect to database: " + ex.getMessage());
-    }
-}
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ */
+package za.ac.cput.dao;
 
-public void insertTicket(ParkingTicket ticket) throws SQLException {   // B2
-    String sql = "INSERT INTO PARKING_TICKET (PLATE_NUMBER, DRIVER_NAME, HOURS_PARKED, AMOUNT_DUE) "
-               + "VALUES (?, ?, ?, ?)";
-    try (PreparedStatement ps = conn.prepareStatement(sql)) {
-        ps.setString(1, ticket.getPlateNumber());
-        ps.setString(2, ticket.getDriverName());
-        ps.setInt(3, ticket.getHoursParked());
-        ps.setDouble(4, ticket.getAmountDue());
-        ps.executeUpdate();
-    }
-}
+/**
+ *
+ * @author BURGERR
+ */
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import za.ac.cput.connection.DBConnection;
+import za.ac.cput.domain.ParkingTicket;
 
-public List<ParkingTicket> getAllTickets() throws SQLException {       // B3
-    List<ParkingTicket> tickets = new ArrayList<>();
-    String sql = "SELECT PLATE_NUMBER, DRIVER_NAME, HOURS_PARKED, AMOUNT_DUE "
-               + "FROM PARKING_TICKET ORDER BY PLATE_NUMBER";
-    try (PreparedStatement ps = conn.prepareStatement(sql);
-         ResultSet rs = ps.executeQuery()) {
-        while (rs.next()) {
-            tickets.add(new ParkingTicket(
-                    rs.getString("PLATE_NUMBER"),
-                    rs.getString("DRIVER_NAME"),
-                    rs.getInt("HOURS_PARKED"),
-                    rs.getDouble("AMOUNT_DUE")));
+
+/**
+ * STUDENT TASK (Part B) - all JDBC code goes in this class.
+ * The table PARKING_TICKET already exists (see schema.sql):
+ *   PLATE_NUMBER VARCHAR(10) PRIMARY KEY, DRIVER_NAME VARCHAR(50),
+ *   HOURS_PARKED INT, AMOUNT_DUE DECIMAL(8,2)
+ */
+public class TicketDAO {
+
+    private Connection conn;
+
+//    // TODO: B1 - a constructor method that returns a Connection built from DBConnection 
+    public TicketDAO() {
+        try {
+            conn = DBConnection.derbyConnection();
+        } catch (SQLException ex) {
+            System.out.println("Could not connect to database: " + ex.getMessage());
         }
     }
-    return tickets;
+    
+//    /** B2: Insert one ticket into PARKING_TICKET using a PreparedStatement. */
+    public void insertTicket(ParkingTicket ticket) throws SQLException {
+        String sql = "INSERT INTO PARKING_TICKET (PLATE_NUMBER, DRIVER_NAME, HOURS_PARKED, AMOUNT_DUE) "
+                   + "VALUES (?, ?, ?, ?)";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, ticket.getPlateNumber());
+            ps.setString(2, ticket.getDriverName());
+            ps.setInt(3, ticket.getHoursParked());
+            ps.setDouble(4, ticket.getAmountDue());
+            ps.executeUpdate();
+        }
+    }
+
+//    /** B3: Read every row of PARKING_TICKET (ordered by plate number) and return them as ParkingTicket objects. */
+    public List<ParkingTicket> getAllTickets() throws SQLException {
+        List<ParkingTicket> tickets = new ArrayList<>();
+        String sql = "SELECT PLATE_NUMBER, DRIVER_NAME, HOURS_PARKED, AMOUNT_DUE "
+                   + "FROM PARKING_TICKET ORDER BY PLATE_NUMBER";
+        try (PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                tickets.add(new ParkingTicket(
+                        rs.getString("PLATE_NUMBER"),
+                        rs.getString("DRIVER_NAME"),
+                        rs.getInt("HOURS_PARKED"),
+                        rs.getDouble("AMOUNT_DUE")));
+            }
+        }
+        return tickets;
+    }
+
 }
